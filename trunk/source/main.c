@@ -2,7 +2,7 @@
 #include <stdio.h>
 #use delay (clock = 20000000)
 #fuses HS, NOWDT, NOPROTECT, NOPUT, NOBROWNOUT, NOLVP
-#use rs232 (baud = 9600, bits = 8, uart1, errors) //configurações para a porta serial xmit = pin_c6, rcv = pin_c7
+#use rs232 (baud = 9600, bits = 8, stream=PEND, uart1, errors) //configurações para a porta serial xmit = pin_c6, rcv = pin_c7
 
 
 typedef struct packet
@@ -15,22 +15,35 @@ typedef struct packet
    int estado_pendulo;
 }ReceivePacket;
 
-BOOLEAN recebeu_pacote;
-char string_recebida[45];
+BOOLEAN recebeuTudo;
+int indexString;
+char string_recebida[50];
 ReceivePacket pacote;
 
 #int_rda
 void reception ()
 {
-    recebeu_pacote = TRUE;
-    gets(string_recebida);
+  char temp;
+  temp = getch();
+  
+  if(temp != '\n')
+  {
+   printf("\ti:%d c:%c |", indexString,temp);
+   string_recebida[indexString++] = temp;
+  }
+  else
+  {
+   recebeuTudo = TRUE;
+  }
 }
 
 //Assumindo string nnn
 int StringToInt(char* string, int size)
-{
+{   
    char offset = '0';
    int value = 0;
+   
+    printf("E ");
    
    if(size == 3)
    {
@@ -56,8 +69,11 @@ int StringToInt(char* string, int size)
 */
 char* SplitPacket(char* source)
 {
+   
    char* term, ptr, retorno[6];
    int i;
+   
+    printf("C ");
    
    term = ",";
    ptr = strtok(source, term); // Inicio do pacote "H"
@@ -75,14 +91,20 @@ void processPacket ()
 {
    char dados[6];
    
+   printf("B ");
+   
    *dados = SplitPacket(string_recebida);
-      
+   
+    printf("D ");
+    
    pacote.posicao = StringToInt(dados[0], 3);
    pacote.tempo_pos = StringToInt(dados[1], 3);
    pacote.angulo = StringToInt(dados[2], 3);
    pacote.tempo_ang = StringToInt(dados[3], 3);
-   pacote.estado_carro = StringToInt(dados[4], 1);
-   pacote.estado_pendulo = StringToInt(dados[5], 1);     
+   pacote.estado_carro = StringToInt(dados[4], 3);
+   pacote.estado_pendulo = StringToInt(dados[5], 3);
+   
+    printf("F ");
 }
 
 void main ()
@@ -99,8 +121,10 @@ void main ()
    
    while (true)            //loop de repetição do código principal
    {
-      if(recebeu_pacote)
+      if(recebeuTudo)
       {
+         printf(" A ");
+        recebeuTudo = FALSE;
         processPacket();
       }
    
@@ -111,9 +135,9 @@ void main ()
          printf("%d, ", pacote.angulo);
          printf("%d, ", pacote.tempo_ang);
          printf("%d, ", pacote.estado_carro);
-         printf("%d\t", pacote.estado_pendulo);
+         printf("%d\n", pacote.estado_pendulo);
       //}
       
-      delay_ms (2000);
+      delay_ms (1000);
    }   // fim do while
 }      // fim do main
