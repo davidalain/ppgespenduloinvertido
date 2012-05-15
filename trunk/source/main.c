@@ -8,12 +8,12 @@
 
 typedef struct packet
 {
-   int posicao;
-   int tempo_pos;
-   int angulo;
-   int tempo_ang;
-   int estado_carro;
-   int estado_pendulo;
+   long posicao;
+   long tempo_pos;
+   long angulo;
+   long tempo_ang;
+   long estado_carro;
+   long estado_pendulo;
 }ReceivePacket;
 
 typedef enum{
@@ -27,7 +27,7 @@ typedef enum{
    ESPERANDO_BARRA_N
 }EstadoRecepcao;
 
-int StringToInt(char* string, int size);
+long StringToInt(char* string, int size);
 void decode();
 
 
@@ -56,6 +56,56 @@ void reception ()
       recebeuTudo = TRUE;
    }
    
+}
+
+//Assumindo string nnn
+long StringToInt(char* string, int size)
+{   
+   char offset = '0';
+   int i, index;
+   BOOLEAN ehNegativo = FALSE;
+   long value = 0;
+   
+   index = 0;
+   
+   if(string[0] == '-')
+   {
+		index += 1;
+		size -= 1;
+		ehNegativo = TRUE;
+   }
+   
+	if(size == 3)
+   {
+	  value += (string[index++]-offset)*100;
+	  value += (string[index++]-offset)*10;
+	  value += (string[index]-offset);
+   }
+   else if (size == 2)
+   {
+	  value += (string[index++]-offset)*10;
+	  value += (string[index]-offset);
+   }
+   else if (size == 1)
+   {
+	  value += (string[index]-offset);
+   }
+   
+   if(ehNegativo)
+   {
+		value *= -1;
+		size++;
+   }
+   
+   printf("string : ");
+   for(i=0; i<size; i++)
+   {
+      printf("%c ", string[i]);
+   }
+   
+  
+   printf("\nvalue = %Ld \n", value);
+   return value;
 }
 
 
@@ -129,46 +179,6 @@ void decode(){
    
 }
 
-//Assumindo string nnn
-int StringToInt(char* string, int size)
-{   
-   char offset = '0';
-   int i;
-   int value = 0;
-   
-   if(size == 3)
-   {
-      value += (string[0]-offset)*100;
-      value += (string[1]-offset)*10;
-      value += (string[2]-offset);
-   }
-   else if (size == 2)
-   {
-      value += (string[0]-offset)*10;
-      value += (string[1]-offset);
-   }
-   else if (size == 1)
-   {
-      value += (string[0]-offset);
-   }
-
-   printf("string : ");
-   for(i=0; i<size; i++)
-   {
-      printf("%c ", string[i]);
-   }
-   
-   if(value < 0)
-   {
-		printf("\noffset = %d ", offset);
-   }
-   
-   printf("\nvalue = %d \n", value);
-   return value;
-}
-
-
-
 void main ()
 {
    enable_interrupts(global);     //habilita a interrupção global
@@ -188,12 +198,12 @@ void main ()
       {
          decode();
          
-         printf("%d, ", pacote.posicao);
-         printf("%d, ", pacote.tempo_pos);
-         printf("%d, ", pacote.angulo);
-         printf("%d, ", pacote.tempo_ang);
-         printf("%d, ", pacote.estado_carro);
-         printf("%d\n", pacote.estado_pendulo);
+         printf("%Ld, ", pacote.posicao);
+         printf("%Ld, ", pacote.tempo_pos);
+         printf("%Ld, ", pacote.angulo);
+         printf("%Ld, ", pacote.tempo_ang);
+         printf("%Ld, ", pacote.estado_carro);
+         printf("%Ld\n", pacote.estado_pendulo);
 
          recebeuTudo = FALSE;
        indexString = 0;
