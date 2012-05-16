@@ -2,7 +2,8 @@
 #include <stdio.h>
 #use delay (clock = 20000000)
 #fuses HS, NOWDT, NOPROTECT, NOPUT, NOBROWNOUT, NOLVP
-#use rs232 (baud = 9600, bits = 8, parity = N, uart1, errors) //configurações para a porta serial xmit = pin_c6, rcv = pin_c7
+#use rs232 (baud = 9600, bits = 8, parity = N, STOP = 1, uart1, errors) //configurações para a porta serial xmit = pin_c6, rcv = pin_c7
+// 9600 8N1
 
 #define BUFFER_SIZE 20
 
@@ -43,17 +44,18 @@ char temp;
 
 #int_rda
 void reception ()
-{   
-   temp = getch();
-   
-   string_recebida[ indexString++ ] = temp; 
-   
-   printf(" i=%d c=%c \n", (indexString-1), temp);
-  
-   if(temp == '\n'){
-      recebeuTudo = TRUE;
-   }
-   
+{
+   char temp;	
+   while (kbhit()) {
+      temp = getc();
+      // Se o buffer estiver cheio descarta os bytes lidos
+      if (indexString < BUFFER_SIZE)
+	      string_recebida[ indexString++ ] = temp;
+
+      if(temp == '\n')
+         recebeuTudo = TRUE;
+      
+//   printf(" i=%d c=%c \n", (indexString-1), temp);
 }
 
 //Assumindo string nnn
@@ -204,7 +206,10 @@ void main ()
          printf("%Ld\n", pacote.estado_pendulo);
 
          recebeuTudo = FALSE;
-       indexString = 0;
+         indexString = 0;
+//       OBS: Eu nao acho uma boa ideia mexer em indexString
+//       fora da interrupcao pois pode haver uma 'concorrencia'
+//       nesse processo. Cristovao Rufino
       }
       
    }   // fim do while
