@@ -2,7 +2,7 @@
 #include <stdio.h>
 #use delay (clock = 20000000)
 #fuses HS, NOWDT, NOPROTECT, NOPUT, NOBROWNOUT, NOLVP
-#use rs232 (baud = 9600, bits = 8, stream=PEND, uart1, errors) //configurações para a porta serial xmit = pin_c6, rcv = pin_c7
+#use rs232 (baud = 9600, bits = 8, parity = N, uart1, errors) //configuraÃ§Ãµes para a porta serial xmit = pin_c6, rcv = pin_c7
 
 #define BUFFER_SIZE 20
 
@@ -39,13 +39,11 @@ ReceivePacket pacote;
 char numeroRecebido[3];
 int indiceNumeroRecebido;
 EstadoRecepcao estadoAtual = ESPERANDO_H;
-
+char temp;
 
 #int_rda
 void reception ()
-{
-   
-   char temp;
+{   
    temp = getch();
    
    string_recebida[ indexString++ ] = temp; 
@@ -109,7 +107,7 @@ long StringToInt(char* string, int size)
 }
 
 
-//O protocolo é: H,<pos_carro>,<tempo_carro>,<angulo>,<tempo_angulo>,<estado_carro>,<estado_pendulo>,\n 
+//O protocolo Ã©: H,<pos_carro>,<tempo_carro>,<angulo>,<tempo_angulo>,<estado_carro>,<estado_pendulo>,\n 
 
 void decode(){
 
@@ -181,8 +179,8 @@ void decode(){
 
 void main ()
 {
-   enable_interrupts(global);     //habilita a interrupção global
-   enable_interrupts(int_rda);    //habilita a interrupção de recepção de caractere pela porta serial
+   enable_interrupts(global);     //habilita a interrupÃ§Ã£o global
+   enable_interrupts(int_rda);    //habilita a interrupÃ§Ã£o de recepÃ§Ã£o de caractere pela porta serial
 
    pacote.posicao = -1;
    pacote.tempo_pos = -1;
@@ -191,7 +189,7 @@ void main ()
    pacote.estado_carro = -1;
    pacote.estado_pendulo = -1;
    
-   while (true)            //loop de repetição do código principal
+   while (true)            //loop de repetiÃ§Ã£o do cÃ³digo principal
    {   
       
       if(recebeuTudo)
