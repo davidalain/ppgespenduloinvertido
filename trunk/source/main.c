@@ -2,7 +2,7 @@
 #include <stdio.h>
 #use delay (clock = 20000000)
 #fuses HS, NOWDT, NOPROTECT, NOPUT, NOBROWNOUT, NOLVP
-#use rs232 (baud = 9600, bits = 8, parity = N, STOP = 1, uart1, errors) //configurações para a porta serial xmit = pin_c6, rcv = pin_c7
+#use rs232 (baud = 9600, bits = 8, parity = N, uart1, errors) //configurações para a porta serial xmit = pin_c6, rcv = pin_c7
 // 9600 8N1
 
 #define BUFFER_SIZE 20
@@ -35,7 +35,7 @@ void decode();
 BOOLEAN recebeuTudo;
 int indexString;
 char string_recebida[BUFFER_SIZE];
-ReceivePacket pacote;
+volatile ReceivePacket pacote;
 
 char numeroRecebido[3];
 int indiceNumeroRecebido;
@@ -45,16 +45,19 @@ char temp;
 #int_rda
 void reception ()
 {
-   char temp;	
+   char temp;   
    while (kbhit()) {
       temp = getc();
       // Se o buffer estiver cheio descarta os bytes lidos
       if (indexString < BUFFER_SIZE)
-	      string_recebida[ indexString++ ] = temp;
+         string_recebida[ indexString++ ] = temp;
 
-      if(temp == '\n')
+      if(temp == '\n'){
+         decode();
+         indexString = 0;
          recebeuTudo = TRUE;
-      
+      }
+   }
 //   printf(" i=%d c=%c \n", (indexString-1), temp);
 }
 
@@ -70,41 +73,33 @@ long StringToInt(char* string, int size)
    
    if(string[0] == '-')
    {
-		index += 1;
-		size -= 1;
-		ehNegativo = TRUE;
+      index += 1;
+      size -= 1;
+      ehNegativo = TRUE;
    }
    
-	if(size == 3)
+   if(size == 3)
    {
-	  value += (string[index++]-offset)*100;
-	  value += (string[index++]-offset)*10;
-	  value += (string[index]-offset);
+     value += (string[index++]-offset)*100;
+     value += (string[index++]-offset)*10;
+     value += (string[index]-offset);
    }
    else if (size == 2)
    {
-	  value += (string[index++]-offset)*10;
-	  value += (string[index]-offset);
+     value += (string[index++]-offset)*10;
+     value += (string[index]-offset);
    }
    else if (size == 1)
    {
-	  value += (string[index]-offset);
+     value += (string[index]-offset);
    }
    
    if(ehNegativo)
    {
-		value *= -1;
-		size++;
+      value *= -1;
+      size++;
    }
    
-   printf("string : ");
-   for(i=0; i<size; i++)
-   {
-      printf("%c ", string[i]);
-   }
-   
-  
-   printf("\nvalue = %Ld \n", value);
    return value;
 }
 
@@ -192,25 +187,19 @@ void main ()
    pacote.estado_pendulo = -1;
    
    while (true)            //loop de repetição do código principal
-   {   
-      
+   {            
       if(recebeuTudo)
       {
-         decode();
-         
          printf("%Ld, ", pacote.posicao);
          printf("%Ld, ", pacote.tempo_pos);
          printf("%Ld, ", pacote.angulo);
          printf("%Ld, ", pacote.tempo_ang);
          printf("%Ld, ", pacote.estado_carro);
          printf("%Ld\n", pacote.estado_pendulo);
-
+         
          recebeuTudo = FALSE;
-         indexString = 0;
-//       OBS: Eu nao acho uma boa ideia mexer em indexString
-//       fora da interrupcao pois pode haver uma 'concorrencia'
-//       nesse processo. Cristovao Rufino
       }
-      
+              
    }   // fim do while
+   
 }      // fim do main
