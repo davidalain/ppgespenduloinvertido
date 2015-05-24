@@ -1,0 +1,1 @@
+Criar um controlador de pêndulo invertido utilizando PIC e lógica Fuzzy.
